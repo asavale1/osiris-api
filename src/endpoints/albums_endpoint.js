@@ -11,8 +11,37 @@ module.exports = function(app){
 
 	app.get('/albums/:id', function(req, res){
 		let id = req.params.id;
-		mongoAlbumsController.getSingleAlbum(id, function(result){
-			res.send(result);
+		let detailedView = req.query.detailed;
+		mongoAlbumsController.getSingleAlbum(id, function(album){
+			if(album){
+				if(detailedView === "true" || detailedView === "True"){
+					response = {
+						"_id" : album._id,
+						"title" : album.title,
+						"songs" : []
+					}
+
+					let promises = [];
+
+					for(let i = 0; i < album.songs.length; i++){
+						promises.push(new Promise(function(resolve, reject){
+							mongoSongsController.getSingleSong(album.songs[i], function(result){
+								resolve(result);
+							});
+						}));
+					}
+
+					Promise.all(promises).then(function(songs){
+						response.songs = songs;
+						res.status(200).send(response);
+					});
+
+				}else{
+					res.status(200).send(album);
+				}
+			}else{
+				return res.status(404).send({ error: "Album with id '" + id + "' not found" });
+			}
 		});
 	});
 

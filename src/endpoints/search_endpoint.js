@@ -1,5 +1,6 @@
 var mongoPlaylistsController = require('../db/playlists_controller');
 var mongoSongsController = require('../db/songs_controller');
+var mongoAlbumsController = require('../db/albums_controller');
 
 module.exports = function(app){
 
@@ -21,9 +22,18 @@ module.exports = function(app){
 				});
 			}));
 
+			promises.push(new Promise(function(resolve, reject){
+				let val = '^' + searchQuery + '.*'
+				console.log("Albums Query", val);
+				mongoAlbumsController.searchAlbums(new RegExp(val, 'i'), function(result){
+					resolve(result);
+				});
+			}));
+
 			Promise.all(promises).then(function(results){
 				console.log("Songs", results)
 				response.songs = results[0];
+				response.albums = results[1];
 				res.status(200).send(response);
 			});
 			

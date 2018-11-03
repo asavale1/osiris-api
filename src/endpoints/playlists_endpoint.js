@@ -127,8 +127,32 @@ module.exports = function(app){
 		}else{
 			res.status(400).send({"error" : "Please specify 'songId' and 'userId'"});
 		}
-
 		
+	});
+
+	app.delete("/playlists/:id/song", function(req, res){
+		if(req.body.songId){
+			let playlistId = req.params.id;
+			let songId = req.body.songId;
+
+			mongoPlaylistsController.getSinglePlaylist(playlistId, function(playlist){
+				console.log("Result", playlist);
+
+				if(playlist){
+					let stringSongIds = playlist.songs.map(function(item){ return String(item); })
+					playlist.songs.splice( stringSongIds.indexOf(songId), 1 );
+
+					mongoPlaylistsController.updatePlaylist(playlistId, playlist, function(result){
+						res.status(200).send({ message: "Song '" + songId + "' deleted" });
+					});
+
+				}else{
+					res.status(404).send({"error" : "No playlist found with id '" + playlistId + "'"});
+				}
+			});
+		}else{
+			res.status(400).send({"error" : "Please specify 'songId'"});
+		}
 	});
 
 	app.delete("/playlists/:id", function(req, res){
