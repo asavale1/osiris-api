@@ -1,4 +1,5 @@
-var mongoController = require('../db/users_controller')
+var mongoController = require('../db/users_controller');
+var mongoPlaylistsController = require('../db/playlists_controller');
 
 module.exports = function(app){
 
@@ -26,10 +27,22 @@ module.exports = function(app){
 				};
 
 				mongoController.addUser(user, function(result){
-					res.status(201).send("User created with pin " + req.body.pin);
-				});
+					mongoPlaylistsController.getPlaylists({ 'title' : "Library", 'userId' : result.insertedId }, function(playlists){
+						if(playlists.length != 0) return res.status(400).send({ 'error': "You have another playlist with the same name" });
 
-				
+						let playlist = {
+							'title' : "Library",
+							'userId' : String(result.insertedId),
+							'primary' : true,
+							'songs' : [],
+							"subscribers" : []
+						};
+
+						mongoPlaylistsController.addPlaylist(playlist, function (resut){
+							return res.status(201).send("User created with pin " + req.body.pin);
+						});
+					});
+				});
 			}
 		});
 	});
@@ -56,9 +69,6 @@ module.exports = function(app){
 					}else{
 						res.status(400).send({ "error" : "Your pin has expired, please request a new one" });	
 					}
-					console.log("User Info", result);
-					console.log("Valid Till", validTillDate);
-					
 				}
 			});
 		}else{
@@ -90,9 +100,33 @@ module.exports = function(app){
 	});
 
 	app.delete("/users/:id", function(req, res){
-		let id = req.params.id;
-		mongoController.deleteUser(id, function(status, message){
-			res.status(status).send(message);
+		let userId = req.params.id;
+		mongoController.getSingleUser(userId, function(result){
+
+			if (!result) return callback(404, {"error" : "No user found with id " + userId});
+
+			mongoPlaylistsController.getPlaylists({ 'userId' : userId }, function(playlists){
+				let promises = [];
+
+				for(let i = 0; i < playlists.length; i++){
+
+					promises.push(new Promise(function(resolve, reject){
+						mongoPlaylistsController.deletePlaylist(playlists[i]._id, function(result){
+							resolve(result);
+						});
+					}));
+				}
+
+				Promise.all(promises).then(function(result){
+					mongoController.deleteUser(userId, function(result){
+						if(result.ok === 1){
+							return res.status(200).send({ message: "User '" + userId + "' deleted" });
+						}else{
+							return res.status(500).send({ message: "An error occurred, failed to delete '" + userId + "'" });
+						}
+					});
+				});
+			});
 		});
 	});
 

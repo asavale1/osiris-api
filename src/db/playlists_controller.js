@@ -9,6 +9,7 @@ module.exports = {
 	},
 
 	getPlaylists: function(query, callback){
+		console.log("Query", query);
 		mongoController.findMultipleItems("playlists", query, function(result){
 			callback(result);
 		});

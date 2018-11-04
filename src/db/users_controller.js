@@ -21,13 +21,8 @@ module.exports = {
 	},
 
 	deleteUser: function(user_id, callback){
-		mongoController.findItem("users", {_id: new mongodb.ObjectID(user_id)}, function(result){
-
-			if (!result) return callback(404, {"error" : "No user found with id " + user_id});
-
-			mongoController.deleteItem("users", {_id: new mongodb.ObjectID(user_id)}, function(result){
-				callback(200, {"message" : "User with id " + user_id + " deleted"});
-			});
+		mongoController.deleteItem("users", {_id: new mongodb.ObjectID(user_id)}, function(result){
+			callback(result['result']);
 		});
 	},
 
