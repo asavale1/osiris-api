@@ -27,9 +27,11 @@ module.exports = {
     },
     deleteSong: function(song, callback){
         mongoController.deleteItem("songs", {_id: new mongodb.ObjectID(song._id)}, function(result){
-            fs.unlink(song.filePath, (err) => {
-                if (err) console.error(err);
-            });
+            if(song.filePath){
+                fs.unlink(song.filePath, (err) => {
+                    if (err) console.error(err);
+                });
+            }
             callback(result['result']);
         });
     },
