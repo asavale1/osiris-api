@@ -25,8 +25,9 @@ module.exports = function(app){
 
 					for(let i = 0; i < album.songs.length; i++){
 						promises.push(new Promise(function(resolve, reject){
-							mongoSongsController.getSingleSong(album.songs[i], function(result){
-								resolve(result);
+							mongoSongsController.getSingleSong(album.songs[i], function(song){
+								song.albumTitle = album.title;
+								resolve(song);
 							});
 						}));
 					}

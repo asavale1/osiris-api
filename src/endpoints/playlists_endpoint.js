@@ -1,6 +1,7 @@
 var mongoPlaylistsController = require('../db/playlists_controller');
 var mongoUsersController = require('../db/users_controller');
 var mongoSongsController = require('../db/songs_controller');
+var mongoAlbumsController = require('../db/albums_controller');
 
 module.exports = function(app){
 
@@ -70,8 +71,11 @@ module.exports = function(app){
 
 					for(let i = 0; i < playlist.songs.length; i++){
 						promises.push(new Promise(function(resolve, reject){
-							mongoSongsController.getSingleSong(playlist.songs[i], function(result){
-								resolve(result);
+							mongoSongsController.getSingleSong(playlist.songs[i], function(song){
+								mongoAlbumsController.getSingleAlbum(song.albumId, function(album){
+									song.albumTitle = album.title;
+									resolve(song);
+								});
 							});
 						}));
 					}

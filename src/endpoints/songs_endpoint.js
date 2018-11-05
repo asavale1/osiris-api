@@ -26,6 +26,8 @@ module.exports = function(app){
 
 		let songFile = req.files.songFile;
 
+		if(!songFile){ return res.status(400).send({ "error" : "Invalid file" }); }
+
 		mongoSongsController.addSong({}, function(result){
 			let id = result.insertedId;
 
