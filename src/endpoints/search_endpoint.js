@@ -22,7 +22,8 @@ module.exports = function(app){
 		if(searchQuery){
 
 			promises.push(new Promise(function(resolve, reject){
-				mongoSongsController.searchSongs(searchQuery, function(result){
+				let val = '.*' + searchQuery + '.*';
+				mongoSongsController.searchSongs(new RegExp(val, 'i'), function(result){
 					
 					let albumPromises = []
 
@@ -45,7 +46,7 @@ module.exports = function(app){
 			}));
 
 			promises.push(new Promise(function(resolve, reject){
-				let val = '^' + searchQuery + '.*'
+				let val = '.*' + searchQuery + '.*';
 				mongoAlbumsController.searchAlbums(new RegExp(val, 'i'), function(result){
 					resolve(result);
 				});

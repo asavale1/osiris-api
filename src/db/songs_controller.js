@@ -14,8 +14,8 @@ module.exports = {
         });
     },
     searchSongs: function(searchQuery, callback){
-        let val = '^' + searchQuery + '.*'
-        mongoController.findMultipleItems("songs", { title: new RegExp(val, 'i')}, function(result){
+        
+        mongoController.findMultipleItems("songs", { title: searchQuery }, function(result){
             callback(result);
         });
     },
