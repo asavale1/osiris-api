@@ -14,7 +14,6 @@ module.exports = function(app){
 	});
 
 	app.post('/users', function(req, res){
-		console.log("Create User", req.body);
 		mongoController.getUsers({ 'pin' : req.body.pin }, function(result){
 			if(result){
 				if(result.length != 0){
@@ -28,7 +27,8 @@ module.exports = function(app){
 						'pin' : req.body.pin,
 						'oldPin' : null,
 						'validTill' : validTillDate,
-						'activated' : false
+						'activated' : false,
+						'username' : ''
 					};
 
 					mongoController.addUser(user, function(result){
@@ -103,10 +103,9 @@ module.exports = function(app){
 	app.put('/users/:id/pin', function(req, res){
 
 		let id = req.params.id;
-		mongoController.getSingleUser(id, function(result){
-			console.log(result);
+		mongoController.getSingleUser(id, function(user){
 
-			if(result){
+			if(user){
 				let validTillDate = new Date();
 				validTillDate.setDate(validTillDate.getDate() + 3);
 

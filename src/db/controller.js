@@ -11,7 +11,6 @@ module.exports = {
                 var dbo = db.db("groovy");
                 dbo.collection(collection).insertOne(item, function(err, res){
                     if (err) throw err;
-                    console.log("1 item inserted into " + collection)
                     db.close();
                     callback(res);
                 });
@@ -26,7 +25,6 @@ module.exports = {
                 var dbo = db.db("groovy");
                 dbo.collection(collection).findOne(query, function(err, result){
                     if (err) throw err;
-                    console.log("Found item in collection " + collection);
                     db.close();
                     callback(result);
                 });
@@ -42,7 +40,6 @@ module.exports = {
                 var dbo = db.db("groovy");
                 dbo.collection(collection).find(query).toArray(function(err, result){
                     if (err) throw err;
-                    console.log("Found items in collection " + collection);
                     db.close();
                     callback(result);
                 });
@@ -57,7 +54,6 @@ module.exports = {
                 var dbo = db.db("groovy");
                 dbo.collection(collection).deleteOne(query, function(err, result){
                     if (err) throw err;
-                    console.log("Deleted item in collection " + collection);
                     db.close();
                     callback(result);
                 });
@@ -72,7 +68,6 @@ module.exports = {
                 var dbo = db.db("groovy");
                 dbo.collection(collection).updateOne(query, { $set: values }, function(err, result){
                     if (err) throw err;
-                    console.log("Updated item in collection " + collection);
                     db.close();
                     callback(result);
                 });

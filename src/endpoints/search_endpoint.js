@@ -1,6 +1,8 @@
 var mongoPlaylistsController = require('../db/playlists_controller');
 var mongoSongsController = require('../db/songs_controller');
 var mongoAlbumsController = require('../db/albums_controller');
+var mongoPlaylistsController = require('../db/playlists_controller');
+var mongoUsersController = require('../db/users_controller');
 
 
 function compare(a,b) {
@@ -64,7 +66,6 @@ module.exports = function(app){
 
 			promises.push(new Promise(function(resolve, reject){
 
-
 				mongoSongsController.getAllSongs(function(result){
 					if(result){
 						let albumPromises = []
@@ -85,7 +86,7 @@ module.exports = function(app){
 							resolve(result);
 						});
 					}else{
-						return res.status(500).send({ "error" : "Error connecting to db" });
+						resolve([]);
 					}
 				});
 			}));
@@ -95,15 +96,51 @@ module.exports = function(app){
 					if(result){
 						resolve(result);
 					}else{
-						reject();
+						resolve([])
 					}
 				});
 			}));
 
+			promises.push(new Promise(function(resolve, reject){
+				mongoPlaylistsController.getPlaylists({ primary: false}, function(playlists){
+					if(playlists){
+						let userPromises = []
+
+						for(let i = 0; i < playlists.length; i++){
+							userPromises.push(new Promise(function(resolve, reject){
+								mongoUsersController.getSingleUser(playlists[i].userId, function(user){
+									resolve(user);
+								});
+							}));	
+						}
+
+						Promise.all(userPromises).then(function(users){
+							for(let i = 0; i < users.length; i++){
+								let user = users[i];
+								if(user){
+									playlists[i].userUsername = user.username;
+								}else{
+									playlists[i].userUsername = '';
+								}
+							}
+							resolve(playlists);
+						});
+						
+					}else{
+						resolve([]);
+					}
+				});
+			}));
 		}
 
 		Promise.all(promises).then(function(results){
-			res.status(200).send({ "songs" : results[0].sort(compare), "albums" : results[1].sort(compare) });
+			res.status(200).send(
+				{ 
+					"songs" : results[0].sort(compare), 
+					"albums" : results[1].sort(compare),
+					"playlists" : results[2].sort(compare)
+				}
+			);
 		});
 		
 	});

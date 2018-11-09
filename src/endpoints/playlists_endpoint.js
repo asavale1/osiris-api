@@ -16,11 +16,43 @@ module.exports = function(app){
 	});
 
 	app.get('/playlists/user/:id', function(req, res){
-		console.log("Get User Playlists");
-		let id = req.params.id;
-		mongoPlaylistsController.getPlaylists({ 'userId' : req.params.id }, function(result){
-			if(result){
-				return res.status(200).send(result);
+		let userId = req.params.id;
+		mongoPlaylistsController.getPlaylists({ 'userId' : userId }, function(playlists){
+			if(playlists){
+				let userPromise = new Promise(function(resolve, reeject){
+					mongoUsersController.getSingleUser(userId, function(user){
+						resolve(user);
+					});
+				});
+
+				userPromise.then(function(user){
+					for(let i = 0; i < playlists.length; i++){
+						if(user){
+							playlists[i].userUsername = user.username;
+						}else{
+							playlists[i].userUsername = '';
+						}
+					}
+					return res.status(200).send(playlists); 
+				});
+				/*let userPromises = [];
+				userPromises.push(new Promise(function(resolve, reject){
+					mongoUsersController.getSingleUser(userId, function(user){
+						resolve(user);
+					});
+				}));
+				
+
+				Promise.all(userPromises).then(function(user){
+					for(let i = 0; i < playlists.length; i++){
+						if(user){
+							playlists[i].userUsername = user.username;
+						}else{
+							playlists[i].userUsername = '';
+						}
+					}
+					return res.status(200).send(playlists);
+				});*/
 			}else{
 				return res.status(500).send({ "error" : "Error connecting to db" });
 			}
@@ -28,11 +60,7 @@ module.exports = function(app){
 	});
 
 	app.post('/playlists', function(req, res){
-		console.log('Create playlist');
-		console.log(req.body);
-
 		if(!req.body || !req.body.title || !req.body.userId){
-			console.log("Invalid request");
 			res.status(400).send({ 'message' : "Please specify 'title' and 'userId' in json" });
 		}else{
 			mongoUsersController.getSingleUser(req.body.userId, function(result){
@@ -81,41 +109,65 @@ module.exports = function(app){
 						"title" : playlist.title,
 						"userId" : playlist.userId,
 						"primary" : playlist.primary,
-						"songs" : []
+						"songs" : [],
+						"subscribers" : playlist.subscribers
 					}
 
 					let promises = [];
 
-					for(let i = 0; i < playlist.songs.length; i++){
-						promises.push(new Promise(function(resolve, reject){
-							mongoSongsController.getSingleSong(playlist.songs[i], function(song){
-								mongoAlbumsController.getSingleAlbum(song.albumId, function(album){
-									song.albumTitle = album.title;
-									resolve(song);
-								});
-							});
-						}));
-					}
+					promises.push(new Promise(function(resolve, reject){
+						let songPromises = [];
 
-					Promise.all(promises).then(function(songs){
-						response.songs = songs;
+						for(let i = 0; i < playlist.songs.length; i++){
+							songPromises.push(new Promise(function(resolve, reject){
+								mongoSongsController.getSingleSong(playlist.songs[i], function(song){
+									mongoAlbumsController.getSingleAlbum(song.albumId, function(album){
+										song.albumTitle = album.title;
+										resolve(song);
+									});
+								});
+							}));
+						}
+
+						Promise.all(songPromises).then(function(songs){
+							resolve(songs);
+						});
+
+					}));
+
+					promises.push(new Promise(function(resolve, reject){
+						mongoUsersController.getSingleUser(playlist.userId, function(user){
+							if(user){
+								resolve(user.username);
+							}else{
+								resolve('');
+							}
+						});
+					}));
+					
+					Promise.all(promises).then(function(results){
+						response.songs = results[0];
+						response.userUsername = results[1];
 						res.status(200).send(response);
 					});
-
 				}else{
-					res.status(200).send(playlist);
+					mongoUsersController.getSingleUser(playlist.userId, function(user){
+						if(user){
+							playlist.userUsername = user.username;
+						}else{
+							playlist.userUsername = '';
+						}
+
+						res.status(200).send(playlist);
+					});
 				}
 			}else{
 				res.status(400).send({"error" : "No playlist found with id '" + playlistId + "'"})
 			}
-			
 		});
 	});
 
 	app.put('/playlists/:id/song', function(req, res){
-		console.log("Add song to playlist");
-		console.log(req.body);
-
 		if(req.body.songId && req.body.userId){
 			let playlistId = req.params.id;
 			mongoPlaylistsController.getSinglePlaylist(playlistId, function(playlist){
@@ -161,8 +213,6 @@ module.exports = function(app){
 			let songId = req.body.songId;
 
 			mongoPlaylistsController.getSinglePlaylist(playlistId, function(playlist){
-				console.log("Result", playlist);
-
 				if(playlist){
 					let stringSongIds = playlist.songs.map(function(item){ return String(item); })
 					playlist.songs.splice( stringSongIds.indexOf(songId), 1 );
@@ -181,8 +231,6 @@ module.exports = function(app){
 	});
 
 	app.delete("/playlists/:id", function(req, res){
-		console.log("Delete playlist");
-		console.log(req.params.id);
 		let id = req.params.id;
 		mongoPlaylistsController.deletePlaylist(id, function(status, message){
 			res.status(status).send(message);
