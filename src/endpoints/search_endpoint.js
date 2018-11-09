@@ -24,31 +24,39 @@ module.exports = function(app){
 			promises.push(new Promise(function(resolve, reject){
 				let val = '.*' + searchQuery + '.*';
 				mongoSongsController.searchSongs(new RegExp(val, 'i'), function(result){
-					
-					let albumPromises = []
 
-					for(let i = 0; i < result.length; i++){
-						albumPromises.push(new Promise(function(resolve, reject){
-							mongoAlbumsController.getSingleAlbum(result[i].albumId, function(album){
-								resolve(album);
-							});
-						}));
-					}
-					Promise.all(albumPromises).then(function(albums){
-						for(let i = 0; i < albums.length; i++){
-							if(String(albums[i]._id) === String(result[i].albumId)){
-								result[i].albumTitle = albums[i].title
-							}
+					if(result){
+						let albumPromises = []
+
+						for(let i = 0; i < result.length; i++){
+							albumPromises.push(new Promise(function(resolve, reject){
+								mongoAlbumsController.getSingleAlbum(result[i].albumId, function(album){
+									resolve(album);
+								});
+							}));
 						}
-						resolve(result);
-					});
+						Promise.all(albumPromises).then(function(albums){
+							for(let i = 0; i < albums.length; i++){
+								if(String(albums[i]._id) === String(result[i].albumId)){
+									result[i].albumTitle = albums[i].title
+								}
+							}
+							resolve(result);
+						});
+					}else{
+						return res.status(500).send({ "error" : "Error connecting to db" });
+					}
 				});
 			}));
 
 			promises.push(new Promise(function(resolve, reject){
 				let val = '.*' + searchQuery + '.*';
 				mongoAlbumsController.searchAlbums(new RegExp(val, 'i'), function(result){
-					resolve(result);
+					if(result){
+						resolve(result);
+					}else{
+						reject();
+					}
 				});
 			}));
 			
@@ -58,30 +66,37 @@ module.exports = function(app){
 
 
 				mongoSongsController.getAllSongs(function(result){
+					if(result){
+						let albumPromises = []
 
-					let albumPromises = []
-
-					for(let i = 0; i < result.length; i++){
-						albumPromises.push(new Promise(function(resolve, reject){
-							mongoAlbumsController.getSingleAlbum(result[i].albumId, function(album){
-								resolve(album);
-							});
-						}));
-					}
-					Promise.all(albumPromises).then(function(albums){
-						for(let i = 0; i < albums.length; i++){
-							if(String(albums[i]._id) === String(result[i].albumId)){
-								result[i].albumTitle = albums[i].title
-							}
+						for(let i = 0; i < result.length; i++){
+							albumPromises.push(new Promise(function(resolve, reject){
+								mongoAlbumsController.getSingleAlbum(result[i].albumId, function(album){
+									resolve(album);
+								});
+							}));
 						}
-						resolve(result);
-					});
+						Promise.all(albumPromises).then(function(albums){
+							for(let i = 0; i < albums.length; i++){
+								if(String(albums[i]._id) === String(result[i].albumId)){
+									result[i].albumTitle = albums[i].title
+								}
+							}
+							resolve(result);
+						});
+					}else{
+						return res.status(500).send({ "error" : "Error connecting to db" });
+					}
 				});
 			}));
 
 			promises.push(new Promise(function(resolve, reject){
 				mongoAlbumsController.getAllAlbums(function(result){
-					resolve(result);
+					if(result){
+						resolve(result);
+					}else{
+						reject();
+					}
 				});
 			}));
 

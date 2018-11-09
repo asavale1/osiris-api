@@ -7,7 +7,11 @@ module.exports = function(app){
 
 	app.get('/playlists', function(req, res){
 		mongoPlaylistsController.getPlaylists({}, function(result){
-			return res.status(200).send(result);
+			if(result){
+				return res.status(200).send(result);
+			}else{
+				return res.status(500).send({ "error" : "Error connecting to db" });
+			}
 		});
 	});
 
@@ -15,7 +19,11 @@ module.exports = function(app){
 		console.log("Get User Playlists");
 		let id = req.params.id;
 		mongoPlaylistsController.getPlaylists({ 'userId' : req.params.id }, function(result){
-			res.status(200).send(result);
+			if(result){
+				return res.status(200).send(result);
+			}else{
+				return res.status(500).send({ "error" : "Error connecting to db" });
+			}
 		});
 	});
 
@@ -33,19 +41,27 @@ module.exports = function(app){
 					
 				}else{
 					mongoPlaylistsController.getPlaylists({ 'title' : req.body.title, 'userId' : req.body.userId }, function(result){
-						if(result.length != 0) return res.status(400).send({ 'error': "You have another playlist with the same name" });
+						if(result){
+							if(result.length != 0) return res.status(400).send({ 'error': "You have another playlist with the same name" });
 
-						let playlist = {
-							'title' : req.body.title,
-							'userId' : req.body.userId,
-							'primary' : false,
-							'songs' : [],
-							"subscribers" : []
-						};
+							let playlist = {
+								'title' : req.body.title,
+								'userId' : req.body.userId,
+								'primary' : false,
+								'songs' : [],
+								"subscribers" : []
+							};
 
-						mongoPlaylistsController.addPlaylist(playlist, function (resut){
-							res.status(201).send("Playlist '" + req.body.title + "' created");
-						})
+							mongoPlaylistsController.addPlaylist(playlist, function (resut){
+								if(result){
+									return res.status(201).send("Playlist '" + req.body.title + "' created");
+								}else{
+									return res.status(500).send({ "error" : "Error connecting to db" });
+								}
+							});
+						}else{
+							return res.status(500).send({ "error" : "Error connecting to db" });
+						}
 					});
 				}
 			});
@@ -64,6 +80,7 @@ module.exports = function(app){
 						"_id" : playlist._id,
 						"title" : playlist.title,
 						"userId" : playlist.userId,
+						"primary" : playlist.primary,
 						"songs" : []
 					}
 
@@ -164,6 +181,8 @@ module.exports = function(app){
 	});
 
 	app.delete("/playlists/:id", function(req, res){
+		console.log("Delete playlist");
+		console.log(req.params.id);
 		let id = req.params.id;
 		mongoPlaylistsController.deletePlaylist(id, function(status, message){
 			res.status(status).send(message);

@@ -5,7 +5,12 @@ module.exports = function(app){
 
 	app.get('/albums', function(req, res){
 		mongoAlbumsController.getAllAlbums(function(result){
-			res.send(result);
+			if(result){
+				return res.send(result);
+			}else{
+				return res.status(500).send({ "error" : "Error connecting to albums db" });
+			}
+			
 		});
 	});
 
