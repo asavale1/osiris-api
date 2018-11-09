@@ -35,24 +35,6 @@ module.exports = function(app){
 					}
 					return res.status(200).send(playlists); 
 				});
-				/*let userPromises = [];
-				userPromises.push(new Promise(function(resolve, reject){
-					mongoUsersController.getSingleUser(userId, function(user){
-						resolve(user);
-					});
-				}));
-				
-
-				Promise.all(userPromises).then(function(user){
-					for(let i = 0; i < playlists.length; i++){
-						if(user){
-							playlists[i].userUsername = user.username;
-						}else{
-							playlists[i].userUsername = '';
-						}
-					}
-					return res.status(200).send(playlists);
-				});*/
 			}else{
 				return res.status(500).send({ "error" : "Error connecting to db" });
 			}
