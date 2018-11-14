@@ -14,12 +14,6 @@ module.exports = {
 		});
 	},
 
-	searchPlaylists: function(searchQuery, callback){
-        mongoController.findMultipleItems("playlists", { title: searchQuery }, function(result){
-            callback(result);
-        });
-    },
-
 	addPlaylist: function(playlist, callback){
 		mongoController.insertItem("playlists", playlist, function(result){
 			callback(result);

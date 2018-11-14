@@ -139,7 +139,6 @@ module.exports = function(app){
 				mongoPlaylistsController.getPlaylists({ primary: false}, function(playlists){
 					if(playlists){
 
-						console.log("playlists", playlists);
 						let userPromises = []
 
 						for(let i = 0; i < playlists.length; i++){

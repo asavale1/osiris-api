@@ -13,6 +13,38 @@ module.exports = function(app){
 		});
 	});
 
+	app.get('/users/:id', function(req, res){
+		let userId = req.params.id;
+		mongoController.getSingleUser(userId, function(user){
+			if(!user){ return res.status(404).send({ "error" : "User with id '" + userId + "' not found" }); }
+			return res.status(200).send(user);
+		});
+	});
+
+	app.put('/users/:id', function(req, res){
+		let userId = req.params.id;
+		values = {
+			username: req.body.username
+		}
+		mongoController.getUsers(values, function(users){
+			console.log("Users", users);
+			if(users.length == 1){ 
+				if(String(users[0]._id) !== userId ){
+					return res.status(400).send({ "error" : "Username not available" }); 
+				}else{
+					return res.status(200).send();
+				}
+			}else if(users.length > 1){
+				return res.status(400).send({ "error" : "Username not available" }); 
+			}else{
+				mongoController.updateUser(userId, values, function(result){
+					return res.status(200).send();
+				});
+			}
+			
+		});
+	});
+
 	app.post('/users', function(req, res){
 		mongoController.getUsers({ 'pin' : req.body.pin }, function(result){
 			if(result){
@@ -69,12 +101,12 @@ module.exports = function(app){
 
 	app.post('/users/verify', function(req, res){
 		if(req.body.pin){
-			mongoController.getUsers({ 'pin' : req.body.pin }, function(result){
-				if(result){
-					if(result.length == 0){
+			mongoController.getUsers({ 'pin' : req.body.pin }, function(user){
+				if(user){
+					if(user.length == 0){
 						res.status(404).send({ "error" : "Invalid pin"});
 					}else{
-						let userInfo = result[0];
+						let userInfo = user[0];
 						let validTillDate = new Date(userInfo['validTill']);
 						let currentDate = new Date();
 						if(currentDate < validTillDate){
@@ -84,7 +116,7 @@ module.exports = function(app){
 								'validTill' : currentDate
 							}
 							mongoController.updateUser(userInfo['_id'], values, function(result){
-								res.status(200).send({ '_id' : userInfo['_id'] });
+								res.status(200).send(userInfo);
 							});
 						}else{
 							res.status(400).send({ "error" : "Your pin has expired, please request a new one" });	
