@@ -6,7 +6,8 @@ After=network.target
 Type=simple
 # Another Type option: forking
 User=root
-ExecStart=node /opt/osiris-api/src/index.js > /var/log/osiris-api/server.log 2>&1
+WorkingDirectory=/opt/osiris-api
+ExecStart=/usr/bin/node src/index.js > /var/log/osiris-api/server.log 2>&1
 Restart=on-failure
 # Other Restart options: or always, on-abort, etc
 
