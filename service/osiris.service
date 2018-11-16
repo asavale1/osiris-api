@@ -1,0 +1,15 @@
+[Unit]
+Description=Osiris API Service
+After=network.target
+
+[Service]
+Type=simple
+# Another Type option: forking
+User=root
+WorkingDirectory=/opt/osiris-api
+ExecStart=node src/index.js > /var/log/osiris-api/server.log 2>&1
+Restart=on-failure
+# Other Restart options: or always, on-abort, etc
+
+[Install]
+WantedBy=multi-user.target
